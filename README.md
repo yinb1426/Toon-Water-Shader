@@ -85,15 +85,16 @@
 ![Lighthouse](https://github.com/yinb1426/Toon-Water-Shader/blob/main/Pictures/Lighthouse.png)
 ## 使用说明
 1. 提供多个开关选项，可根据需要开启或关闭部分功能
-    * 水体透明度
-    * 使用Blinn-Phong模型高光项
-    * 使用Cosine Gradient颜色混合
-    * 使用法线贴图
-    * 添加正弦波
-    * 添加折射扭曲效果
-    * 添加平面反射效果
+ * 水体透明度
+ * 使用Blinn-Phong模型高光项
+ * 使用Cosine Gradient颜色混合
+ * 使用法线贴图
+ * 添加正弦波
+ * 添加折射扭曲效果
+ * 添加平面反射效果
 2. 如果需要添加平面反射效果，由于使用反射相机方法实现反射，需要再水面GO中添加Reflection.cs脚本，rawCamera设置为场景的主相机。此时运行后可以在Game模式中实现平面反射效果。
-3. 在Scenes文件夹中提供测试场景DemoScene，可在其中测试实现效果
+3. 在Scenes文件夹中提供测试场景DemoScene，可在其中测试实现效果。
+4. **使用该工程的方法**：将本项目中除了README.md和Pictures文件夹的所有文件导入Unity工程中，打开提供的DemoScene，即可查看实现效果
 ## TODO
 * SSPR
 * ......
