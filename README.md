@@ -10,8 +10,8 @@
 * 实现基于正弦波的边缘泡沫效果(仿原神效果)
 ## 参数
 **常规配置项**：
-| 参数 | 类型 | <center> 说明 | 建议参考值 |
-| :------: | :------: | :------ | :------: |
+| 参数 | 类型 | <center>说明</center> | 建议参考值 |
+| :------: | :------: | ------ | :------: |
 | BaseMap | 2D | 用于在VS中获取UV值，无特殊用处| 置空 |
 | UseAlpha| Toggle | 是否开启水体的透明度，不开启则Alpha=1.0 | √ |
 | UseBlinnPhongSpecular | Toggle | 是否使用Blinn-Phong高光项 | √ |
@@ -19,28 +19,28 @@
 | SpecularPower | Float | Blinn-Phong高光项指数项 | 128.0 |
 
 **控制器**：
-| 参数 | 类型 | <center> 说明 | 建议参考值 |
-| :------: | :------: | :------ | :------: |
+| 参数 | 类型 | <center>说明</center> | 建议参考值 |
+| :------: | :------: | ------ | :------: |
 | WaterDepthController | Float | 用于控制水深的系数 | 3.5 |
 | DistanceController | Float | 用于控制远水颜色混合距离的系数 | 0.01 |
 | WaterFadeController | Range(0, 1) | 用于控制近岸水透明度显示的系数 | 0.7 |
 
 **水体颜色**：
-| 参数 | 类型 | <center> 说明 | 建议参考值 |
-| :------: | :------: | :------ | :------: |
+| 参数 | 类型 | <center>说明</center> | 建议参考值 |
+| :------: | :------: | ------ | :------: |
 | ShallowColor | Color[HDR] | 浅水颜色 | (0.0, 1.976675, 1.683646, 1.0, 1.4) |
 | DeepColor |  Color[HDR] | 深水颜色 | (0.0, 0.229934, 0.8039216, 1.0, 0.0) / (0.0, 0.1321121, 0.8039216, 1.0, 0.0) |
 | FarColor | Color[HDR] | 远水颜色 | (0.0, 0.4542139, 0.8196079, 1.0, 0.0) |
 
 **Cosine Gradient水体颜色(可选)**：
-| 参数 | 类型 | <center> 说明 | 建议参考值 |
-| :------: | :------: | :------ | :------: |
+| 参数 | 类型 | <center>说明</center> | 建议参考值 |
+| :------: | :------: | ------ | :------: |
 | UseCosineGradient | Toggle | 是否使用Cosine Gradient显示水体颜色，如果使用距离混合，则关闭该选项 | × |
 | WaterColorController | Float | 用于控制CosineGradient颜色的系数 | 1.5 |
 
 **法线贴图**：
 | 参数 | 类型 | <center> 说明 | 建议参考值 |
-| :------: | :------: | :------ | :------: |
+| :------: | :------: | ------ | :------: |
 | UseNormalMap| Toggle | 是否使用法线贴图 | √ |
 | FirstNormalMap | 2D | 第一法线贴图 | Tiling = 12X12 |
 | FirstNormalSpeedInverse | Float | 第一法线贴图移动速度系数的倒数 | 80 |
@@ -48,8 +48,8 @@
 | SecondNormalSpeedInverse | Float | 第二法线贴图移动速度系数的倒数 | -60 |
 
 **正弦波(可选)**：
-| 参数 | 类型 | <center> 说明 | 建议参考值 |
-| :------: | :------: | :------ | :------: |
+| 参数 | 类型 | <center>说明</center> | 建议参考值 |
+| :------: | :------: | ------ | :------: |
 | UseSineWave | Toggle | 是否添加近岸正弦波泡沫效果 | √ |
 | SinePeriod | Float | 控制正弦波周期的系数 | 25 |
 | SineSpeed | Float | 控制正弦波的移动系数 |1 |
@@ -58,8 +58,8 @@
 | SineStrength | Float | 控制正弦波的强度 | 4.0 |
 
 **正弦波—噪声控制器**：
-| 参数 | 类型 | <center> 说明 | 建议参考值 |
-| :------: | :------: | :------ | :------: |
+| 参数 | 类型 | <center>说明</center> | 建议参考值 |
+| :------: | :------: | ------ | :------: |
 | NoiseSpeed | Float | 控制噪声移动的速度 | 0.02 |
 | NoiseSize | Float | SimpleNoise中控制噪声大小的参数 | 60 |
 | NoiseMinEdge | Float | 用于截取噪声的下边界 | 1.3 |
@@ -67,16 +67,16 @@
 > 噪声使用的为Unity Shader Graph的Simple Noise节点，参考：https://docs.unity3d.com/cn/Packages/com.unity.shadergraph@10.5/manual/Simple-Noise-Node.html
 
 **折射**：
-| 参数 | 类型 | <center> 说明 | 建议参考值 |
-| :------: | :------: | :------ | :------: |
+| 参数 | 类型 | <center>说明</center> | 建议参考值 |
+| :------: | :------: | ------ | :------: |
 | UseRefraction | Toggle | 是否添加折射效果 | √ |
 | RefractedScale | Range(0.0, 0.1) | 控制折射扭曲的细碎程度 | 0.0438 |
 | RefractedSpeed | Range(0.0, 0.2) | 控制折射扭曲的速度 | 0.079 |
 | RefractedStrength | Range(0.0, 0.1) | 控制折射扭曲的强度 | 0.03 |
 
 **平面反射**：
-| 参数 | 类型 | <center> 说明 | 建议参考值 |
-| :------: | :------: | :------ | :------: |
+| 参数 | 类型 | <center>说明</center> | 建议参考值 |
+| :------: | :------: | ------ | :------: |
 | UsePlanarReflection | Toggle | 是否添加平面效果 | √ |
 | ReflectionTex | 2D | 反射贴图，需要使用Reflection.cs脚本提供，不能自行设置 | |
 | FresnelPower | Range(0.01, 64.0) | 控制菲涅尔效果的指数项 | 0.6 |
