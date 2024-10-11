@@ -82,7 +82,7 @@
 | FresnelPower | Range(0.01, 64.0) | 控制菲涅尔效果的指数项 | 0.6 |
 | FresnelEdge | Range(0.0, 1.0) | 控制菲涅尔效果的范围 | 0.6 |
 ## 实现效果
-![Lighthouse](https://github.com/yinb1426/Toon-Water-Shader/edit/main/Pictures/Lighthouse.png)
+![Lighthouse](https://github.com/yinb1426/Toon-Water-Shader/blob/main/Pictures/Lighthouse.png)
 ## 使用说明
 1. 提供多个开关选项，可根据需要开启或关闭部分功能
     * 水体透明度
