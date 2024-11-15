@@ -224,8 +224,9 @@ Shader "Unlit/ToonWaterShader"
                     surfaceColor = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, refractedUV);
                 #else
                     surfaceColor = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, input.screenPos.xy / input.screenPos.w);
-                #endif 
-
+                #endif
+                waterColor = waterColor * surfaceColor;
+                
                 // Planar Reflection
                 #ifdef _USE_PLANAR_REFLECTION
                     float fresnel = clamp(FresnelEffect(input.normalWS, normalize(-viewVector), _FresnelPower), 0.0, _FresnelEdge);
@@ -236,10 +237,12 @@ Shader "Unlit/ToonWaterShader"
                     #endif
                     float3 reflectionColor = SAMPLE_TEXTURE2D(_ReflectionTex, sampler_ReflectionTex, refractedUV);
                     surfaceColor = lerp(surfaceColor, reflectionColor, fresnel);
+                    float3 reflectionWaterColor = lerp(reflectionColor, waterColor, _WaterMixController);
+                    waterColor = lerp(waterColor, reflectionWaterColor, fresnel);
                 #endif
-                waterColor = lerp(surfaceColor, waterColor, _WaterMixController);
-                waterColor = lerp(surfaceColor, waterColor, waterDepth01);
                 
+                waterColor = lerp(surfaceColor, waterColor, waterDepth01);
+                return float4(waterColor, 1.0);
                 // 法线            
                 float3 normalWS = input.normalWS;
                 #ifdef _USE_NORMAL_MAP
