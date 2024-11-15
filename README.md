@@ -11,6 +11,7 @@
 * 实现基于正弦波的边缘泡沫效果(仿原神效果)
 ### ToonWaterShader2 (改进版)
 * 添加深浅水混色、远水混色的控制开关
+* 添加BlinnPhong模型的控制开关
 * 更加强调折射和反射的效果，更具真实感
 * 添加对折/反射颜色与水体颜色的混合比例，强化折/反射显示效果
 ## 参数
@@ -94,6 +95,7 @@
 | :------: | :------: | ------ | :------: |
 | BaseMap | 2D | 用于在VS中获取UV值，无特殊用处| 置空 |
 | UseAlpha| Toggle | 是否开启水体的透明度，不开启则Alpha=1.0 |  |
+| UseBlinnPhongModel | Toggle | 是否使用Blinn-Phong模型 |  |
 | UseBlinnPhongSpecular | Toggle | 是否使用Blinn-Phong高光项 | √ |
 | SpecularColor | Color | Blinn-Phong高光颜色 | (1.0, 1.0, 1.0, 1.0)|
 | SpecularPower | Float | Blinn-Phong高光项指数项 | 128.0 |
@@ -103,8 +105,8 @@
 | :------: | :------: | ------ | :------: |
 | WaterDepthController | Float | 用于控制水深的系数 | 3.5 |
 | DistanceController | Float | 用于控制远水颜色混合距离的系数 | 0.01 |
-| WaterFadeController | Float | 用于控制近岸水菲涅尔系数的系数 | 0.3 |
-| WaterMixController | Range(0, 1) | 用于水体颜色和的系数 | 0.25 |
+| WaterFadeController | Float | 用于控制近岸水菲涅尔系数的系数 | 0.1 |
+| WaterMixController | Range(0, 1) | 用于水体颜色和的系数 | 0.1 |
 
 **水体颜色**：
 | 参数 | 类型 | <center>说明</center> | 建议参考值 |
@@ -174,6 +176,7 @@
  * 水体透明度
  * 深浅水混合
  * 远水混合
+ * 使用Blinn-Phong模型
  * 使用Blinn-Phong模型高光项
  * 使用Cosine Gradient颜色混合
  * 使用法线贴图

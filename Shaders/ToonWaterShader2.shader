@@ -5,6 +5,7 @@ Shader "Unlit/ToonWaterShader"
         [Header(General)]
         [MainTexture] _BaseMap ("Base Map", 2D) = "white" {}
         [Toggle(_USE_ALPHA)] _UseAlpha("Use Alpha", Float) = 1.0
+        [Toggle(_USE_BLINN_PHONG_MODEL)] _UseBlinnPhongModel("Use Blinn Phong Model", Float) = 1.0
         [Toggle(_USE_BLINN_PHONG_SPECULAR)] _UseBlinnPhongSpecular("Use Blinn Phong Specular", Float) = 1.0
         _SpecularColor ("Specular Color", Color) = (1.0, 1.0, 1.0, 1.0)
         _SpecularPower ("Specular Power", Float) = 8.0
@@ -87,6 +88,7 @@ Shader "Unlit/ToonWaterShader"
             #pragma shader_feature_local_fragment _USE_ALPHA
             #pragma shader_feature_local_fragment _USE_SHALLOW_COLOR
             #pragma shader_feature_local_fragment _USE_FAR_COLOR
+            #pragma shader_feature_local_fragment _USE_BLINN_PHONG_MODEL
             #pragma shader_feature_local_fragment _USE_BLINN_PHONG_SPECULAR
             #pragma shader_feature_local_fragment _USE_COSINE_GRADIENT
             #pragma shader_feature_local_fragment _USE_NORMAL_MAP
@@ -218,31 +220,28 @@ Shader "Unlit/ToonWaterShader"
                     waterColor = GetWaterColorByCosineGradient(saturate(_WaterColorController - waterDepth01));
                 #endif
 
-                float3 surfaceColor;
-                #ifdef _USE_REFRACTION
-                    float2 refractedUV = RefractedUV(input.uv, input.screenPos.xy / input.screenPos.w, _Time.y, _RefractedScale, _RefractedSpeed, _RefractedStrength);
-                    surfaceColor = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, refractedUV);
-                #else
-                    surfaceColor = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, input.screenPos.xy / input.screenPos.w);
+                // 折射效果
+                float2 refractedUV = input.screenPos.xy / input.screenPos.w;
+                #ifdef _USE_REFRACTION // 如果开启折射效果，则uv进行折射扭曲
+                    refractedUV = RefractedUV(input.uv, input.screenPos.xy / input.screenPos.w, _Time.y, _RefractedScale, _RefractedSpeed, _RefractedStrength);
                 #endif
-                waterColor = waterColor * surfaceColor;
+                float3 surfaceColor = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, refractedUV);
+                waterColor = waterColor * surfaceColor; // 折射部分的颜色需要混合水体颜色
                 
-                // Planar Reflection
+                // 平面反射(Planar Reflection)
                 #ifdef _USE_PLANAR_REFLECTION
                     float fresnel = clamp(FresnelEffect(input.normalWS, normalize(-viewVector), _FresnelPower), 0.0, _FresnelEdge);
-                    if(waterDepth < _WaterFadeController)
+                    if(waterDepth < _WaterFadeController) // 水深低于阈值，则菲涅尔效果减弱，显示折射原色(未混合水体颜色)
                         fresnel *= waterDepth / _WaterFadeController;
-                    #ifndef _USE_REFRACTION
-                        float2 refractedUV = RefractedUV(input.uv, input.screenPos.xy / input.screenPos.w, _Time.y, _RefractedScale, _RefractedSpeed, _RefractedStrength);
-                    #endif
                     float3 reflectionColor = SAMPLE_TEXTURE2D(_ReflectionTex, sampler_ReflectionTex, refractedUV);
                     surfaceColor = lerp(surfaceColor, reflectionColor, fresnel);
+                    // 反射部分的颜色需要按比例混合水体颜色
                     float3 reflectionWaterColor = lerp(reflectionColor, waterColor, _WaterMixController);
-                    waterColor = lerp(waterColor, reflectionWaterColor, fresnel);
+                    waterColor = lerp(waterColor, reflectionWaterColor, fresnel); // 最终的水体颜色
                 #endif
+                                
+                waterColor = lerp(surfaceColor, waterColor, waterDepth01); // 按深度混合，获得最终的水体颜色
                 
-                waterColor = lerp(surfaceColor, waterColor, waterDepth01);
-                return float4(waterColor, 1.0);
                 // 法线            
                 float3 normalWS = input.normalWS;
                 #ifdef _USE_NORMAL_MAP
@@ -255,23 +254,25 @@ Shader "Unlit/ToonWaterShader"
                     normalWS = mul(normalTS, tbnMatrix);
                 #endif
 
-                // Blinn-Phong光照
-                Light mainLight = GetMainLight();
-                float3 lightDirWS = normalize(mainLight.direction);
-                float3 lightColor = mainLight.color;
-                float3 viewDirWS = normalize(-viewVector);
-                
-                float NdotL = dot(normalWS, lightDirWS);
-                float halfLambert = 0.5 * NdotL + 0.5;
-                float3 diffuseColor = waterColor * lightColor * halfLambert;
+                float3 finalColor = waterColor;
 
-                float3 finalColor = diffuseColor;
-
-                #ifdef _USE_BLINN_PHONG_SPECULAR
-                    float3 halfwayDirWS = normalize(lightDirWS + viewDirWS);
-                    float NdotH = saturate(dot(normalWS, halfwayDirWS));
-                    float3 specularColor = _SpecularColor.rgb * lightColor * pow(NdotH, _SpecularPower);
-                    finalColor += specularColor;
+                #ifdef _USE_BLINN_PHONG_MODEL
+                    // Blinn-Phong光照
+                    Light mainLight = GetMainLight();
+                    float3 lightDirWS = normalize(mainLight.direction);
+                    float3 lightColor = mainLight.color;
+                    float3 viewDirWS = normalize(-viewVector);
+                    
+                    float NdotL = dot(normalWS, lightDirWS);
+                    float halfLambert = 0.5 * NdotL + 0.5;
+                    float3 diffuseColor = waterColor * lightColor * halfLambert;
+                    finalColor = diffuseColor;
+                    #ifdef _USE_BLINN_PHONG_SPECULAR
+                        float3 halfwayDirWS = normalize(lightDirWS + viewDirWS);
+                        float NdotH = saturate(dot(normalWS, halfwayDirWS));
+                        float3 specularColor = _SpecularColor.rgb * lightColor * pow(NdotH, _SpecularPower);
+                        finalColor += specularColor;
+                    #endif
                 #endif
 
                 #ifdef _USE_SINE_WAVE
