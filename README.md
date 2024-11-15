@@ -103,8 +103,8 @@
 | :------: | :------: | ------ | :------: |
 | WaterDepthController | Float | 用于控制水深的系数 | 3.5 |
 | DistanceController | Float | 用于控制远水颜色混合距离的系数 | 0.01 |
-| WaterFadeController | Float | 用于控制近岸水菲涅尔系数的系数 | 0.3 |
-| WaterMixController | Range(0, 1) | 用于水体颜色和的系数 | 0.25 |
+| WaterFadeController | Float | 用于控制近岸水菲涅尔系数的系数 | 0.1 |
+| WaterMixController | Range(0, 1) | 用于水体颜色和的系数 | 0.1 |
 
 **水体颜色**：
 | 参数 | 类型 | <center>说明</center> | 建议参考值 |
