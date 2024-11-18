@@ -22,6 +22,8 @@ Shader "Unlit/ToonWaterShader"
         [HDR] _DeepColor ("Deep Color", Color) = (1.0, 1.0, 1.0, 1.0)
         [Toggle(_USE_FAR_COLOR)] _UseFarColor ("Use Far Color", Float) = 1.0
         [HDR] _FarColor ("Far Color", Color) = (1.0, 1.0, 1.0, 1.0)
+        [Toggle(_USE_DEEP_WATER_OPAQUE)] _UseDeepWaterOpaque ("Use Deep Water Opaque", Float) = 0.0
+        _OpaqueDepthController ("Opaque Depth Controller", Float) = 3.5
 
         [Header(Water Color Cosine Gradient)]
         [Toggle(_USE_COSINE_GRADIENT)] _UseCosineGradient("Use Cosine Gradient", Float) = 1.0
@@ -87,6 +89,7 @@ Shader "Unlit/ToonWaterShader"
 
             #pragma shader_feature_local_fragment _USE_ALPHA
             #pragma shader_feature_local_fragment _USE_SHALLOW_COLOR
+            #pragma shader_feature_local_fragment _USE_DEEP_WATER_OPAQUE
             #pragma shader_feature_local_fragment _USE_FAR_COLOR
             #pragma shader_feature_local_fragment _USE_BLINN_PHONG_MODEL
             #pragma shader_feature_local_fragment _USE_BLINN_PHONG_SPECULAR
@@ -125,6 +128,7 @@ Shader "Unlit/ToonWaterShader"
                 float _DistanceController;
                 float _WaterFadeController;
                 float _WaterMixController;
+                float _OpaqueDepthController;
 
                 float4 _ShallowColor;
                 float4 _DeepColor;
@@ -226,8 +230,14 @@ Shader "Unlit/ToonWaterShader"
                     refractedUV = RefractedUV(input.uv, input.screenPos.xy / input.screenPos.w, _Time.y, _RefractedScale, _RefractedSpeed, _RefractedStrength);
                 #endif
                 float3 surfaceColor = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, refractedUV);
-                waterColor = waterColor * surfaceColor; // 折射部分的颜色需要混合水体颜色
-                
+                float3 surfaceWaterColor = waterColor * surfaceColor;
+                #ifdef _USE_DEEP_WATER_OPAQUE // 深水处不显示水底画面，只显示水体颜色
+                    float opaqueDepthController = saturate(waterDepth / _OpaqueDepthController);
+                    waterColor = lerp(surfaceWaterColor, waterColor, opaqueDepthController); // 折射部分的颜色需要混合水体颜色
+                #else
+                    waterColor = surfaceWaterColor;
+                #endif
+
                 // 平面反射(Planar Reflection)
                 #ifdef _USE_PLANAR_REFLECTION
                     float fresnel = clamp(FresnelEffect(input.normalWS, normalize(-viewVector), _FresnelPower), 0.0, _FresnelEdge);

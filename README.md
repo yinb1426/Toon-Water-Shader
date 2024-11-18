@@ -116,6 +116,8 @@
 | DeepColor |  Color[HDR] | 深水颜色 | (0.0, 0.3967609, 0.8789604, 1.0, 0.0) |
 | UseFarColor| Toggle | 是否开启远水颜色混合 |  |
 | FarColor | Color[HDR] | 远水颜色 | (0.0, 0.4542139, 0.8196079, 1.0, 0.0) |
+| UseDeepWaterOpaque| Toggle | 是否开启深水不透明，开启则深水处也会显示水底颜色 |  |
+| OpaqueDepthController | Float | 用于控制深水不透明深度范围的系数 | 0.1 |
 
 **Cosine Gradient水体颜色(可选)**：
 | 参数 | 类型 | <center>说明</center> | 建议参考值 |
