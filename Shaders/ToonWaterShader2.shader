@@ -23,7 +23,8 @@ Shader "Unlit/ToonWaterShader"
         [Toggle(_USE_FAR_COLOR)] _UseFarColor ("Use Far Color", Float) = 1.0
         [HDR] _FarColor ("Far Color", Color) = (1.0, 1.0, 1.0, 1.0)
         [Toggle(_USE_DEEP_WATER_OPAQUE)] _UseDeepWaterOpaque ("Use Deep Water Opaque", Float) = 0.0
-        _OpaqueDepthController ("Opaque Depth Controller", Float) = 3.5
+        _OpaqueDepthMinEdge ("Opaque Depth Min Edge", Float) = 3.5
+        _OpaqueDepthRange ("Opaque Depth Range", Float) = 3.5
 
         [Header(Water Color Cosine Gradient)]
         [Toggle(_USE_COSINE_GRADIENT)] _UseCosineGradient("Use Cosine Gradient", Float) = 1.0
@@ -128,7 +129,8 @@ Shader "Unlit/ToonWaterShader"
                 float _DistanceController;
                 float _WaterFadeController;
                 float _WaterMixController;
-                float _OpaqueDepthController;
+                float _OpaqueDepthMinEdge;
+                float _OpaqueDepthRange;
 
                 float4 _ShallowColor;
                 float4 _DeepColor;
@@ -209,13 +211,12 @@ Shader "Unlit/ToonWaterShader"
                 float samplerDepth = LinearEyeDepth(SampleSceneDepth(input.screenPos.xy / input.screenPos.w), _ZBufferParams); // 使用做了透视除法的屏幕坐标采样深度纹理
                 viewVector = viewVector / screenPositionDepth * samplerDepth;
                 float3 waterBedPosition = viewVector + _WorldSpaceCameraPos.xyz;
-
+                
                 // 获取水深
                 float waterDepth = (input.positionWS - waterBedPosition).y;
-                waterDepth /= _WaterDepthController;
-                float waterDepth01 = saturate(waterDepth);
+                float waterDepth01 = saturate(waterDepth / _WaterDepthController);
                 waterDepth01 = smoothstep(0.1, 1.0, waterDepth01);
-
+                
                 float3 waterColor = _DeepColor;
                 #ifdef _USE_SHALLOW_COLOR
                     waterColor = lerp(_ShallowColor, _DeepColor, waterDepth01);
@@ -223,7 +224,7 @@ Shader "Unlit/ToonWaterShader"
                 #ifdef _USE_COSINE_GRADIENT
                     waterColor = GetWaterColorByCosineGradient(saturate(_WaterColorController - waterDepth01));
                 #endif
-
+                
                 // 折射效果
                 float2 refractedUV = input.screenPos.xy / input.screenPos.w;
                 #ifdef _USE_REFRACTION // 如果开启折射效果，则uv进行折射扭曲
@@ -232,7 +233,7 @@ Shader "Unlit/ToonWaterShader"
                 float3 surfaceColor = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, refractedUV);
                 float3 surfaceWaterColor = waterColor * surfaceColor;
                 #ifdef _USE_DEEP_WATER_OPAQUE // 深水处不显示水底画面，只显示水体颜色
-                    float opaqueDepthController = saturate(waterDepth / _OpaqueDepthController);
+                    float opaqueDepthController = Remap(waterDepth, float2(_OpaqueDepthMinEdge, _OpaqueDepthMinEdge + _OpaqueDepthRange), float2(0.0, 1.0));;
                     waterColor = lerp(surfaceWaterColor, waterColor, opaqueDepthController); // 折射部分的颜色需要混合水体颜色
                 #else
                     waterColor = surfaceWaterColor;
@@ -249,7 +250,7 @@ Shader "Unlit/ToonWaterShader"
                     float3 reflectionWaterColor = lerp(reflectionColor, waterColor, _WaterMixController);
                     waterColor = lerp(waterColor, reflectionWaterColor, fresnel); // 最终的水体颜色
                 #endif
-                                
+                
                 waterColor = lerp(surfaceColor, waterColor, waterDepth01); // 按深度混合，获得最终的水体颜色
                 
                 // 法线            
