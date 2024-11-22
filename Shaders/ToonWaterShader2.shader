@@ -15,6 +15,8 @@ Shader "Unlit/ToonWaterShader"
         _DistanceController ("Far Water Color Distance Controller", Float) = 0.1
         _WaterFadeController ("Water Fade Controller", Float) = 0.2
         _WaterMixController ("Water Mix Controller", Range(0, 1)) = 0.3
+        [Toggle(_USE_REFRACTED_DEPTH_CONTROLLER)] _UseRefractedDepthController("Use Refracted Depth Controller", Float) = 1.0
+        _RefractedDepthController ("Refracted Depth Controller", Range(0.0001, 3)) = 0.2
 
         [Header(Water Color)]
         [Toggle(_USE_SHALLOW_COLOR)] _UseShallowColor ("Use Shallow Color", Float) = 1.0
@@ -92,6 +94,7 @@ Shader "Unlit/ToonWaterShader"
             #pragma shader_feature_local_fragment _USE_SHALLOW_COLOR
             #pragma shader_feature_local_fragment _USE_DEEP_WATER_OPAQUE
             #pragma shader_feature_local_fragment _USE_FAR_COLOR
+            #pragma shader_feature_local_fragment _USE_REFRACTED_DEPTH_CONTROLLER
             #pragma shader_feature_local_fragment _USE_BLINN_PHONG_MODEL
             #pragma shader_feature_local_fragment _USE_BLINN_PHONG_SPECULAR
             #pragma shader_feature_local_fragment _USE_COSINE_GRADIENT
@@ -129,6 +132,7 @@ Shader "Unlit/ToonWaterShader"
                 float _DistanceController;
                 float _WaterFadeController;
                 float _WaterMixController;
+                float _RefractedDepthController;
                 float _OpaqueDepthMinEdge;
                 float _OpaqueDepthRange;
 
@@ -229,6 +233,10 @@ Shader "Unlit/ToonWaterShader"
                 float2 refractedUV = input.screenPos.xy / input.screenPos.w;
                 #ifdef _USE_REFRACTION // 如果开启折射效果，则uv进行折射扭曲
                     refractedUV = RefractedUV(input.uv, input.screenPos.xy / input.screenPos.w, _Time.y, _RefractedScale, _RefractedSpeed, _RefractedStrength);
+                    #ifdef _USE_REFRACTED_DEPTH_CONTROLLER
+                        float refractedDepth = smoothstep(0.0, _RefractedDepthController, waterDepth01);
+                        refractedUV = lerp(input.screenPos.xy / input.screenPos.w, refractedUV, refractedDepth);
+                    #endif
                 #endif
                 float3 surfaceColor = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, refractedUV);
                 float3 surfaceWaterColor = waterColor * surfaceColor;

@@ -107,6 +107,9 @@
 | DistanceController | Float | 用于控制远水颜色混合距离的系数 | 0.01 |
 | WaterFadeController | Float | 用于控制近岸水菲涅尔系数的系数 | 0.1 |
 | WaterMixController | Range(0, 1) | 用于水体颜色和的系数 | 0.1 |
+| UseRefractedDepthController| Toggle | 是否开启浅水不扭曲，用于控制在某一阈值内的浅水不出现扭曲现象 | √ |
+| RefractedDepthController | Range(0.0001, 3) | 用于控制浅水不扭曲深度的系数 | 0.1 |
+> 关于浅水处由于深度纹理不能扭曲而导致的混色问题，仍需新的改进方法。主要出现在浅滩处有大块没入水中的物体，造成前后景较大的深度差的情况；小/深物体或平滑过渡的沙滩不会出现这种情况。
 
 **水体颜色**：
 | 参数 | 类型 | <center>说明</center> | 建议参考值 |
