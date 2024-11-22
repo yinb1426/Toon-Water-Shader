@@ -84,7 +84,6 @@ Shader "Unlit/ToonWaterShader"
 
             #include "Utils.hlsl"
             #include "UnityNoise.hlsl"
-            #include "RefractedUV.hlsl"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -207,19 +206,50 @@ Shader "Unlit/ToonWaterShader"
                 return waterColor.rgb;
             }
             
+            float3 ScenePosition(float3 positionWS, float4 screenPos, float2 uv)
+            {
+                float3 viewVector = positionWS - _WorldSpaceCameraPos.xyz;
+                float screenPositionDepth = screenPos.w; // 未做透视除法的w即为顶点的深度
+                float samplerDepth = LinearEyeDepth(SampleSceneDepth(uv), _ZBufferParams); // 使用做了透视除法的屏幕坐标采样深度纹理
+                viewVector = viewVector / screenPositionDepth * samplerDepth;
+                float3 scenePosition = viewVector + _WorldSpaceCameraPos.xyz;
+                return scenePosition;
+            }
+
+            float2 RefractedUV(float2 uv, float4 screenPos, float3 worldPos, float time, float scale, float speed, float strength)
+            {
+                uv = uv * rcp(scale) + speed * time;
+                float noise = 0.0;
+                GradientNoise(uv, 10, noise);
+                noise = Remap(noise, float2(0, 1), float2(-1, 1)) * strength;
+                float2 outUV = screenPos.xy / screenPos.w + noise;
+                // 消除当物体露出水面时的扭曲错误
+                float3 scenePos = ScenePosition(worldPos, screenPos, outUV);
+                float deltaY = (worldPos - scenePos).g;
+                if(deltaY <= 0.001)
+                    outUV = screenPos.xy / screenPos.w;
+                return outUV;
+            }
+
             float4 frag(Varyings input) : SV_Target
             {
-                // 获取水底深度
-                float3 viewVector = input.positionWS - _WorldSpaceCameraPos.xyz;
-                float screenPositionDepth = input.screenPos.w; // 未做透视除法的w即为顶点的深度
-                float samplerDepth = LinearEyeDepth(SampleSceneDepth(input.screenPos.xy / input.screenPos.w), _ZBufferParams); // 使用做了透视除法的屏幕坐标采样深度纹理
-                viewVector = viewVector / screenPositionDepth * samplerDepth;
-                float3 waterBedPosition = viewVector + _WorldSpaceCameraPos.xyz;
-                
+                float2 screenUV = input.screenPos.xy / input.screenPos.w;
+                #ifdef _USE_REFRACTION// 如果开启折射效果，则uv进行折射扭曲
+                    screenUV = RefractedUV(input.uv, input.screenPos, input.positionWS, _Time.y, _RefractedScale, _RefractedSpeed, _RefractedStrength);
+                #endif
+
+                // 获取水底深度，使用扭曲后的screenUV，采样场景位置，可以避免因未扭曲深度而导致的渲染错误问题
+                float3 waterBedPosition = ScenePosition(input.positionWS, input.screenPos, screenUV);
+
                 // 获取水深
+                // 直接除以一个系数获取深度
+                // float waterDepth = (input.positionWS - waterBedPosition).y;
+                // float waterDepth01 = saturate(waterDepth / _WaterDepthController);
+                // waterDepth01 = smoothstep(0.1, 1.0, waterDepth01);
+                // 使用自然对数获取深度
                 float waterDepth = (input.positionWS - waterBedPosition).y;
-                float waterDepth01 = saturate(waterDepth / _WaterDepthController);
-                waterDepth01 = smoothstep(0.1, 1.0, waterDepth01);
+                float waterDepthExponential = exp((-waterDepth) / _WaterDepthController);
+                float waterDepth01 = 1.0 - saturate(waterDepthExponential);
                 
                 float3 waterColor = _DeepColor;
                 #ifdef _USE_SHALLOW_COLOR
@@ -228,19 +258,16 @@ Shader "Unlit/ToonWaterShader"
                 #ifdef _USE_COSINE_GRADIENT
                     waterColor = GetWaterColorByCosineGradient(saturate(_WaterColorController - waterDepth01));
                 #endif
-                
-                // 折射效果
-                float2 refractedUV = input.screenPos.xy / input.screenPos.w;
-                #ifdef _USE_REFRACTION // 如果开启折射效果，则uv进行折射扭曲
-                    refractedUV = RefractedUV(input.uv, input.screenPos.xy / input.screenPos.w, _Time.y, _RefractedScale, _RefractedSpeed, _RefractedStrength);
-                    #ifdef _USE_REFRACTED_DEPTH_CONTROLLER
-                        float refractedDepth = smoothstep(0.0, _RefractedDepthController, waterDepth01);
-                        refractedUV = lerp(input.screenPos.xy / input.screenPos.w, refractedUV, refractedDepth);
-                    #endif
+
+                #ifdef _USE_REFRACTED_DEPTH_CONTROLLER
+                    float refractedDepth = smoothstep(0.0, _RefractedDepthController, waterDepth01);
+                    screenUV = lerp(input.screenPos.xy / input.screenPos.w, screenUV, refractedDepth);
                 #endif
-                float3 surfaceColor = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, refractedUV);
-                float3 surfaceWaterColor = waterColor * surfaceColor;
-                #ifdef _USE_DEEP_WATER_OPAQUE // 深水处不显示水底画面，只显示水体颜色
+
+                // 折射效果
+                float3 surfaceColor = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, screenUV); // 浅层水颜色，不乘上水体蓝色，为透明色
+                float3 surfaceWaterColor = waterColor * surfaceColor; // 深层水颜色，乘上水体蓝色
+                #ifdef _USE_DEEP_WATER_OPAQUE // 很深的水不显示水底画面，只显示水体颜色
                     float opaqueDepthController = Remap(waterDepth, float2(_OpaqueDepthMinEdge, _OpaqueDepthMinEdge + _OpaqueDepthRange), float2(0.0, 1.0));;
                     waterColor = lerp(surfaceWaterColor, waterColor, opaqueDepthController); // 折射部分的颜色需要混合水体颜色
                 #else
@@ -248,15 +275,17 @@ Shader "Unlit/ToonWaterShader"
                 #endif
 
                 // 平面反射(Planar Reflection)
+                float3 viewVector = input.positionWS - _WorldSpaceCameraPos.xyz;
                 #ifdef _USE_PLANAR_REFLECTION
                     float fresnel = clamp(FresnelEffect(input.normalWS, normalize(-viewVector), _FresnelPower), 0.0, _FresnelEdge);
                     if(waterDepth < _WaterFadeController) // 水深低于阈值，则菲涅尔效果减弱，显示折射原色(未混合水体颜色)
                         fresnel *= waterDepth / _WaterFadeController;
-                    float3 reflectionColor = SAMPLE_TEXTURE2D(_ReflectionTex, sampler_ReflectionTex, refractedUV);
-                    surfaceColor = lerp(surfaceColor, reflectionColor, fresnel);
+                    float3 reflectionColor = SAMPLE_TEXTURE2D(_ReflectionTex, sampler_ReflectionTex, screenUV);
+                    // surfaceColor = lerp(surfaceColor, reflectionColor, fresnel); // 最终的浅层水颜色(不融合水体颜色)
                     // 反射部分的颜色需要按比例混合水体颜色
                     float3 reflectionWaterColor = lerp(reflectionColor, waterColor, _WaterMixController);
-                    waterColor = lerp(waterColor, reflectionWaterColor, fresnel); // 最终的水体颜色
+                    surfaceColor = lerp(surfaceColor, reflectionWaterColor, fresnel); // 最终的浅层水颜色(融合水体颜色)
+                    waterColor = lerp(waterColor, reflectionWaterColor, fresnel); // 最终的深层水颜色
                 #endif
                 
                 waterColor = lerp(surfaceColor, waterColor, waterDepth01); // 按深度混合，获得最终的水体颜色
@@ -275,23 +304,22 @@ Shader "Unlit/ToonWaterShader"
 
                 float3 finalColor = waterColor;
 
+                Light mainLight = GetMainLight();
+                float3 lightDirWS = normalize(mainLight.direction);
+                float3 lightColor = mainLight.color;
+                float3 viewDirWS = normalize(-viewVector);
                 #ifdef _USE_BLINN_PHONG_MODEL
                     // Blinn-Phong光照
-                    Light mainLight = GetMainLight();
-                    float3 lightDirWS = normalize(mainLight.direction);
-                    float3 lightColor = mainLight.color;
-                    float3 viewDirWS = normalize(-viewVector);
-                    
                     float NdotL = dot(normalWS, lightDirWS);
                     float halfLambert = 0.5 * NdotL + 0.5;
                     float3 diffuseColor = waterColor * lightColor * halfLambert;
                     finalColor = diffuseColor;
-                    #ifdef _USE_BLINN_PHONG_SPECULAR
-                        float3 halfwayDirWS = normalize(lightDirWS + viewDirWS);
-                        float NdotH = saturate(dot(normalWS, halfwayDirWS));
-                        float3 specularColor = _SpecularColor.rgb * lightColor * pow(NdotH, _SpecularPower);
-                        finalColor += specularColor;
-                    #endif
+                #endif
+                #ifdef _USE_BLINN_PHONG_SPECULAR
+                    float3 halfwayDirWS = normalize(lightDirWS + viewDirWS);
+                    float NdotH = saturate(dot(normalWS, halfwayDirWS));
+                    float3 specularColor = _SpecularColor.rgb * lightColor * pow(NdotH, _SpecularPower);
+                    finalColor += specularColor;
                 #endif
 
                 #ifdef _USE_SINE_WAVE

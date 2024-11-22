@@ -103,13 +103,12 @@
 **控制器**：
 | 参数 | 类型 | <center>说明</center> | 建议参考值 |
 | :------: | :------: | ------ | :------: |
-| WaterDepthController | Float | 用于控制水深的系数 | 3.5 |
+| WaterDepthController | Float | 用于控制水深的系数 | 1.2 |
 | DistanceController | Float | 用于控制远水颜色混合距离的系数 | 0.01 |
 | WaterFadeController | Float | 用于控制近岸水菲涅尔系数的系数 | 0.1 |
 | WaterMixController | Range(0, 1) | 用于水体颜色和的系数 | 0.1 |
-| UseRefractedDepthController| Toggle | 是否开启浅水不扭曲，用于控制在某一阈值内的浅水不出现扭曲现象 | √ |
+| UseRefractedDepthController| Toggle | 是否开启浅水不扭曲，用于控制在某一阈值内的浅水不出现扭曲现象 |  |
 | RefractedDepthController | Range(0.0001, 3) | 用于控制浅水不扭曲深度的系数 | 0.1 |
-> 关于浅水处由于深度纹理不能扭曲而导致的混色问题，仍需新的改进方法。主要出现在浅滩处有大块没入水中的物体，造成前后景较大的深度差的情况；小/深物体或平滑过渡的沙滩不会出现这种情况。
 
 **水体颜色**：
 | 参数 | 类型 | <center>说明</center> | 建议参考值 |
@@ -189,12 +188,13 @@
  * 添加正弦波
  * 添加折射扭曲效果
  * 添加平面反射效果
+ * ......(部分后续添加的开关选项不再列举在此处)
 2. 如果需要添加平面反射效果，由于使用反射相机方法实现反射，需要再水面GO中添加Reflection.cs脚本，rawCamera设置为场景的主相机。此时运行后可以在Game模式中实现平面反射效果。
 3. 在Scenes文件夹中提供测试场景DemoScene，可在其中测试实现效果。
 4. **使用该工程的方法**：将本项目中除了README.md和Pictures文件夹的所有文件导入Unity工程中，打开提供的DemoScene，即可查看实现效果
 
 ## TODO
 * SSPR
-* 因为扭曲UV采样深度纹理出现的奇怪颜色问题 / 因为深度纹理没有扭曲出现的混色错误问题
+* 因为扭曲UV采样深度纹理出现的奇怪颜色问题 / 因为深度纹理没有扭曲出现的混色错误问题(**已解决**)
 * 逐步过渡到**真实感水体渲染**
 * ......
