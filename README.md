@@ -14,6 +14,10 @@
 * 添加BlinnPhong模型的控制开关
 * 更加强调折射和反射的效果，更具真实感
 * 添加对折/反射颜色与水体颜色的混合比例，强化折/反射显示效果
+## 实现效果
+![Lighthouse](https://github.com/yinb1426/Toon-Water-Shader/blob/main/Pictures/Lighthouse.png)
+![LighthouseAtDusk](https://github.com/yinb1426/Toon-Water-Shader/blob/main/Pictures/LighthouseAtDusk.png)
+> 天空盒使用的是：https://github.com/yinb1426/Custom-Skybox
 ## 参数
 ### ToonWaterShader
 **常规配置项**：
@@ -170,11 +174,6 @@
 | ReflectionTex | 2D | 反射贴图，需要使用Reflection.cs脚本提供，不能自行设置 | |
 | FresnelPower | Range(0.01, 64.0) | 控制菲涅尔效果的指数项 | 2 |
 | FresnelEdge | Range(0.0, 1.0) | 控制菲涅尔效果的范围 | 1 |
-
-## 实现效果
-![Lighthouse](https://github.com/yinb1426/Toon-Water-Shader/blob/main/Pictures/Lighthouse.png)
-![LighthouseAtDusk](https://github.com/yinb1426/Toon-Water-Shader/blob/main/Pictures/LighthouseAtDusk.png)
-> 天空盒使用的是：https://github.com/yinb1426/Custom-Skybox
 
 ## 使用说明
 1. 提供多个开关选项，可根据需要开启或关闭部分功能
