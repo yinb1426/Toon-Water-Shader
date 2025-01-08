@@ -15,7 +15,9 @@
 * 更加强调折射和反射的效果，更具真实感
 * 添加对折/反射颜色与水体颜色的混合比例，强化折/反射显示效果
 ## 实现效果
+- ToonWaterShader
 ![Lighthouse](https://github.com/yinb1426/Toon-Water-Shader/blob/main/Pictures/Lighthouse.png)
+- ToonWaterShader2
 ![LighthouseAtDusk](https://github.com/yinb1426/Toon-Water-Shader/blob/main/Pictures/LighthouseAtDusk.png)
 > 天空盒使用的是：https://github.com/yinb1426/Custom-Skybox
 ## 参数
