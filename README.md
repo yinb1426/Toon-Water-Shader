@@ -132,9 +132,9 @@
 | 参数 | 类型 | <center> 说明 | 建议参考值 |
 | :------: | :------: | ------ | :------: |
 | UseNormalMap| Toggle | 是否使用法线贴图 |  |
-| FirstNormalMap | 2D | 第一法线贴图 | Tiling = 12X12 |
+| FirstNormalMap | 2D | 第一法线贴图 | Tiling = 20X20 |
 | FirstNormalSpeedInverse | Float | 第一法线贴图移动速度系数的倒数 | 80 |
-| SecondNormalMap | 2D | 第二法线贴图 | Tiling = 15X15 |
+| SecondNormalMap | 2D | 第二法线贴图 | Tiling = 18X18 |
 | SecondNormalSpeedInverse | Float | 第二法线贴图移动速度系数的倒数 | -60 |
 
 **正弦波(可选)**：
