@@ -18,7 +18,7 @@
 - ToonWaterShader
 ![Lighthouse](https://github.com/yinb1426/Toon-Water-Shader/blob/main/Pictures/Lighthouse.png)
 - ToonWaterShader2
-![LighthouseAtDusk](https://github.com/yinb1426/Toon-Water-Shader/blob/main/Pictures/LighthouseAtDusk.png)
+![LighthouseAtDusk](https://github.com/yinb1426/Toon-Water-Shader/blob/main/Pictures/LighthouseAtDusk2.png)
 > 天空盒使用的是：https://github.com/yinb1426/Custom-Skybox
 ## 参数
 ### ToonWaterShader

@@ -259,7 +259,7 @@ Shader "Unlit/ToonWaterShader"
                     waterColor = GetWaterColorByCosineGradient(saturate(_WaterColorController - waterDepth01));
                 #endif
 
-                #ifdef _USE_REFRACTED_DEPTH_CONTROLLER
+                #ifdef _USE_REFRACTED_DEPTH_CONTROLLER  // 深度控制扭曲uv程度
                     float refractedDepth = smoothstep(0.0, _RefractedDepthController, waterDepth01);
                     screenUV = lerp(input.screenPos.xy / input.screenPos.w, screenUV, refractedDepth);
                 #endif
@@ -323,9 +323,15 @@ Shader "Unlit/ToonWaterShader"
                 #endif
 
                 #ifdef _USE_SINE_WAVE
+                    // 获取未扭曲的深度参数
+                    float3 waterBedPositionUnrefracted = ScenePosition(input.positionWS, input.screenPos, input.screenPos.xy / input.screenPos.w);
+                    float waterDepthUnrefracted = (input.positionWS - waterBedPositionUnrefracted).y;
+                    float waterDepthExponentialUnrefracted = exp((-waterDepthUnrefracted) / _WaterDepthController);
+                    float waterDepth01Unrefracted = 1.0 - saturate(waterDepthExponentialUnrefracted);
+
                     // SineWave
-                    float sineWave = saturate(_SineAmplitude * sin(_SinePeriod * PI * waterDepth + _Time.y * _SineSpeed));
-                    float waterDepthMask = 1.0 - step(1.0 - waterDepth01, _SineMaskThreshold);
+                    float sineWave = saturate(_SineAmplitude * sin(_SinePeriod * PI * waterDepthUnrefracted + _Time.y * _SineSpeed));
+                    float waterDepthMask = 1.0 - step(1.0 - waterDepth01Unrefracted, _SineMaskThreshold);
 
                     // 采样噪声纹理
                     float noiseValue = 0.0;
@@ -338,16 +344,15 @@ Shader "Unlit/ToonWaterShader"
                     sineWave += noiseValue;
                     sineWave = smoothstep(_NoiseMinEdge, _NoiseMaxEdge, sineWave);
 
-                    // 从遮罩边缘往岸边，透明度增高
+                    // // 从遮罩边缘往岸边，透明度增高
                     sineWave *= waterDepthMask;
-                    sineWave *= Remap(clamp(1.0 - waterDepth01, _SineMaskThreshold, 1.0), float2(_SineMaskThreshold, 1.0), float2(0.0, 1.0));
+                    sineWave *= Remap(clamp(1.0 - waterDepth01Unrefracted, _SineMaskThreshold, 1.0), float2(_SineMaskThreshold, 1.0), float2(0.0, 1.0));
                     sineWave *= _SineStrength;
 
                     // 越往岸边，透明度降低
                     // 最终从遮罩边缘往岸边，透明度呈现先高后低的趋势
                     // 岸边浪花处的透明度等于sineWave值
-                    float edgeMask = 1.0 - Remap(clamp(1.0 - waterDepth01, _SineMaskThreshold, 1.0), float2(_SineMaskThreshold, 1.0), float2(0.0, 1.0));
-                    waterDepth01 = (waterDepth01 + sineWave) * edgeMask;
+                    float edgeMask = 1.0 - Remap(clamp(1.0 - waterDepth01Unrefracted, _SineMaskThreshold, 1.0), float2(_SineMaskThreshold, 1.0), float2(0.0, 1.0));
                     finalColor += sineWave;
                 #endif
 
